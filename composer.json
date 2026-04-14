@@ -3,6 +3,7 @@
     "license": "proprietary",
     "require": {
         "php": ">=8.2",
+        "symfony/console": "^7.4",
         "symfony/dotenv": "^7.4",
         "symfony/flex": "^2",
         "symfony/framework-bundle": "^7.4",
@@ -11,7 +12,7 @@
     },
     "config": {
         "allow-plugins": {
-            "symfony/flex": true,
+            "symfony/flex": false,
             "symfony/runtime": true
         },
         "sort-packages": true

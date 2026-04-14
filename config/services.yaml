@@ -1,0 +1,16 @@
+services:
+    _defaults:
+        autowire: true
+        autoconfigure: true
+
+    App\:
+        resource: '../src/'
+        exclude:
+            - '../src/Domain/Entity/'
+            - '../src/Core/DTO/'
+            - '../src/Shared/Traits/'
+            - '../src/Kernel.php'
+
+    App\Application\Handler\:
+        resource: '../src/Application/Handler'
+        tags: ['messenger.message_handler']

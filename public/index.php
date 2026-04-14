@@ -5,7 +5,6 @@ use Symfony\Component\HttpFoundation\Request;
 
 require_once dirname(__DIR__).'/vendor/autoload.php';
 
-// Loads .env file if it exists
 if (file_exists(dirname(__DIR__).'/.env')) {
     (new \Symfony\Component\Dotenv\Dotenv())->load(dirname(__DIR__).'/.env');
 }
