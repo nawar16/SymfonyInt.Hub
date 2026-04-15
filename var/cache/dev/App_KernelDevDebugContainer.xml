@@ -38,7 +38,7 @@
     </parameter>
     <parameter key="kernel.charset">UTF-8</parameter>
     <parameter key="kernel.container_class">App_KernelDevDebugContainer</parameter>
-    <parameter key="kernel.share_dir">D:\Docker\SymfonyIntHub/var/share/dev</parameter>
+    <parameter key="kernel.share_dir">D:\Docker\SymfonyIntHub\var\share\dev</parameter>
     <parameter key=".container.known_envs" type="collection">
       <parameter>dev</parameter>
       <parameter>test</parameter>
@@ -201,6 +201,7 @@
       <tag name="messenger.message_handler"/>
       <tag name="messenger.message_handler" bus="" handles="" method="" priority="0" sign="false" from_transport=""/>
       <argument type="service" id="App\Application\Service\SyncProductsService"/>
+      <argument type="service" id="App\Core\Service\IntegrationRegistry"/>
     </service>
     <service id="App\Application\Message\SyncProductsMessage" class="App\Application\Message\SyncProductsMessage" autowire="true" autoconfigure="true">
       <tag name="container.error" message="Cannot autowire service &quot;App\Application\Message\SyncProductsMessage&quot;: argument &quot;$integrationName&quot; of method &quot;__construct()&quot; is type-hinted &quot;string&quot;, you should configure its value explicitly."/>
@@ -213,6 +214,9 @@
     </service>
     <service id="App\Core\Enum\SyncStatus" class="App\Core\Enum\SyncStatus" autowire="true" autoconfigure="true">
       <tag name="container.excluded" source="because it's an enum"/>
+    </service>
+    <service id="App\Core\Service\IntegrationRegistry" class="App\Core\Service\IntegrationRegistry" autowire="true" autoconfigure="true">
+      <argument type="tagged_iterator" tag="app.integration"/>
     </service>
     <service id=".abstract.App\Domain\Repository\ProductRepositoryInterface" class="App\Domain\Repository\ProductRepositoryInterface" autowire="true" autoconfigure="true" abstract="true">
       <tag name="container.excluded" source="because the class is abstract"/>
@@ -238,7 +242,9 @@
     <service id="App\Infrastructure\Persistence\DoctrineProductRepository" class="App\Infrastructure\Persistence\DoctrineProductRepository" autowire="true" autoconfigure="true">
       <argument type="service" id="doctrine.orm.default_entity_manager"/>
     </service>
-    <service id="App\Integration\Mock\MockIntegration" class="App\Integration\Mock\MockIntegration" autowire="true" autoconfigure="true"/>
+    <service id="App\Integration\Mock\MockIntegration" class="App\Integration\Mock\MockIntegration" autowire="true" autoconfigure="true">
+      <tag name="app.integration"/>
+    </service>
     <service id="argument_metadata_factory" class="Symfony\Component\HttpKernel\ControllerMetadata\ArgumentMetadataFactory"/>
     <service id="argument_resolver.backed_enum_resolver" class="Symfony\Component\HttpKernel\Controller\ArgumentResolver\BackedEnumValueResolver">
       <tag name="Symfony\Component\HttpKernel\Controller\ArgumentResolver\BackedEnumValueResolver" priority="100">controller.argument_value_resolver</tag>
@@ -356,7 +362,7 @@
       </argument>
     </service>
     <service id="http_cache.store" class="Symfony\Component\HttpKernel\HttpCache\Store">
-      <argument>D:\Docker\SymfonyIntHub/var/share/dev/http_cache</argument>
+      <argument>D:\Docker\SymfonyIntHub\var\share\dev/http_cache</argument>
     </service>
     <service id="url_helper" class="Symfony\Component\HttpFoundation\UrlHelper">
       <argument type="service" id="request_stack"/>
@@ -1020,7 +1026,7 @@
       <tag name="kernel.reset" method="reset"/>
       <argument>ngn1Svofh2</argument>
       <argument>0</argument>
-      <argument>D:\Docker\SymfonyIntHub/var/share/dev/pools/app</argument>
+      <argument>D:\Docker\SymfonyIntHub\var\share\dev/pools/app</argument>
       <argument type="service" id="cache.default_marshaller" on-invalid="ignore"/>
       <call method="setLogger">
         <argument type="service" id="logger" on-invalid="ignore"/>
@@ -1075,7 +1081,7 @@
       <tag name="kernel.reset" method="reset"/>
       <argument>RXLDRVpxy0</argument>
       <argument>0</argument>
-      <argument>D:\Docker\SymfonyIntHub/var/share/dev/pools/app</argument>
+      <argument>D:\Docker\SymfonyIntHub\var\share\dev/pools/app</argument>
       <argument type="service" id="cache.default_marshaller" on-invalid="ignore"/>
       <call method="setLogger">
         <argument type="service" id="logger" on-invalid="ignore"/>
@@ -1106,7 +1112,7 @@
       <tag name="monolog.logger" channel="cache"/>
       <argument/>
       <argument>0</argument>
-      <argument>D:\Docker\SymfonyIntHub/var/share/dev/pools/app</argument>
+      <argument>D:\Docker\SymfonyIntHub\var\share\dev/pools/app</argument>
       <argument type="service" id="cache.default_marshaller" on-invalid="ignore"/>
       <call method="setLogger">
         <argument type="service" id="logger" on-invalid="ignore"/>

@@ -17,3 +17,11 @@ services:
 
     App\Domain\Repository\ProductRepositoryInterface:
         alias: App\Infrastructure\Persistence\DoctrineProductRepository
+
+    App\Integration\:
+        resource: '../src/Integration/'
+        tags: ['app.integration']
+    
+    App\Core\Service\IntegrationRegistry:
+        arguments:
+            $integrations: !tagged_iterator app.integration

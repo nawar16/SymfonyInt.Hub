@@ -35,4 +35,8 @@ class MockIntegration implements IntegrationInterface
             source: 'mock'
         );
     }
+    public function supports(string $name): bool
+    {
+        return $name === 'mock';
+    }
 }
