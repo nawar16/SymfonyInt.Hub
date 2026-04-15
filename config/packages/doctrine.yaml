@@ -1,14 +1,47 @@
 doctrine:
     dbal:
-        url: '%env(resolve:DATABASE_URL)%'
+                
+    dbal:
+        connections:
+            # TRANSACTION POOLER
+            default:
+                #schema_filter: '~^(?!auth\.|extensions\.|storage\.|realtime\.)~'
+                url: '%env(resolve:DATABASE_URL)%' 
+                schema_filter: '~^(?!auth\.|extensions\.|storage\.|realtime\.|graphql\.)~'
 
-        # IMPORTANT: You MUST configure your server version,
-        # either here or in the DATABASE_URL env var (see .env file)
+                mapping_types:
+                    _text: text
+                    _int4: integer
+                    _int8: bigint
+                    vector: json 
+                    jsonb: json
+                    code_challenge_method: string
+                    factor_type: string  
+                    factor_status: string
+                server_version: '16.0.0' 
+                options:
+                    1002: true  
+            # SESSION POOLER
+            maintenance:
+                #schema_filter: '~^(?!auth\.|extensions\.|storage\.|realtime\.)~'
+                url: '%env(resolve:SESSION_URL)%'  
+                schema_filter: '~^(?!auth\.|extensions\.|storage\.|realtime\.|graphql\.)~'
+                mapping_types:
+                    _text: text
+                    _int4: integer
+                    _int8: bigint
+                    vector: json 
+                    jsonb: json
+                    code_challenge_method: string
+                    factor_type: string  
+                    factor_status: string
+                server_version: '16.0.0' 
+                   
+        #url: '%env(resolve:DATABASE_URL)%'
+        #profiling_collect_backtrace: '%kernel.debug%'
+        #use_savepoints: true
+        #driver: 'pdo_sqlite'
 
-        driver: 'pdo_sqlite'
-
-        profiling_collect_backtrace: '%kernel.debug%'
-        use_savepoints: true
     orm:
         auto_generate_proxy_classes: true
         enable_lazy_ghost_objects: true
@@ -22,8 +55,8 @@ doctrine:
             App:
                 type: attribute
                 is_bundle: false
-                dir: '%kernel.project_dir%/src/Entity'
-                prefix: 'App\Entity'
+                dir: '%kernel.project_dir%/src/Domain/Entity'
+                prefix: 'App\Domain\Entity'
                 alias: App
         controller_resolver:
             auto_mapping: false

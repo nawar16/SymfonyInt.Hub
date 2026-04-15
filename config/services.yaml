@@ -14,3 +14,6 @@ services:
     App\Application\Handler\:
         resource: '../src/Application/Handler'
         tags: ['messenger.message_handler']
+
+    App\Domain\Repository\ProductRepositoryInterface:
+        alias: App\Infrastructure\Persistence\DoctrineProductRepository

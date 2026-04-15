@@ -113,6 +113,7 @@
     <parameter key="doctrine.dbal.connection_factory.types" type="collection"/>
     <parameter key="doctrine.connections" type="collection">
       <parameter key="default">doctrine.dbal.default_connection</parameter>
+      <parameter key="maintenance">doctrine.dbal.maintenance_connection</parameter>
     </parameter>
     <parameter key="doctrine.default_connection">default</parameter>
     <parameter key="doctrine.orm.configuration.class">Doctrine\ORM\Configuration</parameter>
@@ -189,16 +190,23 @@
     <service id=".abstract.App\Core\Contract\IntegrationInterface" class="App\Core\Contract\IntegrationInterface" autowire="true" autoconfigure="true" abstract="true">
       <tag name="container.excluded" source="because the class is abstract"/>
     </service>
+    <service id="App\Core\Enum\SyncStatus" class="App\Core\Enum\SyncStatus" autowire="true" autoconfigure="true">
+      <tag name="container.excluded" source="because it's an enum"/>
+    </service>
     <service id=".abstract.App\Domain\Repository\ProductRepositoryInterface" class="App\Domain\Repository\ProductRepositoryInterface" autowire="true" autoconfigure="true" abstract="true">
       <tag name="container.excluded" source="because the class is abstract"/>
     </service>
-    <service id="App\Entity\User" class="App\Entity\User" autowire="true" autoconfigure="true">
-      <tag name="container.excluded" source="because it's a Doctrine entity"/>
-      <tag name="container.excluded" source="with #[Doctrine\ORM\Mapping\Entity] attribute"/>
+    <service id="App\Infrastructure\Console\TestSaveProductCommand" class="App\Infrastructure\Console\TestSaveProductCommand" autowire="true" autoconfigure="true">
+      <tag name="console.command" command="app:test-save-product" description="" help=""/>
+      <tag name="console.command"/>
+      <tag name="container.no_preload"/>
+      <argument type="service" id="App\Infrastructure\Persistence\DoctrineProductRepository"/>
+      <call method="setName">
+        <argument>app:test-save-product</argument>
+      </call>
     </service>
-    <service id="App\Repository\UserRepository" class="App\Repository\UserRepository" autowire="true" autoconfigure="true">
-      <tag name="doctrine.repository_service"/>
-      <argument type="service" id="doctrine"/>
+    <service id="App\Infrastructure\Persistence\DoctrineProductRepository" class="App\Infrastructure\Persistence\DoctrineProductRepository" autowire="true" autoconfigure="true">
+      <argument type="service" id="doctrine.orm.default_entity_manager"/>
     </service>
     <service id="argument_metadata_factory" class="Symfony\Component\HttpKernel\ControllerMetadata\ArgumentMetadataFactory"/>
     <service id="argument_resolver.backed_enum_resolver" class="Symfony\Component\HttpKernel\Controller\ArgumentResolver\BackedEnumValueResolver">
@@ -1586,6 +1594,10 @@
         </argument>
       </call>
     </service>
+    <service id="doctrine.dbal.default_regex_schema_filter" class="Doctrine\Bundle\DoctrineBundle\Dbal\RegexSchemaAssetFilter">
+      <tag name="doctrine.dbal.schema_filter" connection="default"/>
+      <argument>~^(?!auth\.|extensions\.|storage\.|realtime\.|graphql\.)~</argument>
+    </service>
     <service id="doctrine.dbal.default_connection.event_manager" class="Symfony\Bridge\Doctrine\ContainerAwareEventManager">
       <argument type="service" id=".service_locator.RQmp2Kc"/>
       <argument type="collection">
@@ -1618,19 +1630,30 @@
     <service id="doctrine.dbal.default_connection" class="Doctrine\DBAL\Connection" public="true">
       <argument type="collection">
         <argument key="url">%env(resolve:DATABASE_URL)%</argument>
-        <argument key="driver">pdo_sqlite</argument>
-        <argument key="use_savepoints">true</argument>
+        <argument key="driver">pdo_mysql</argument>
         <argument key="idle_connection_ttl">600</argument>
         <argument key="host">localhost</argument>
         <argument key="port">null</argument>
         <argument key="user">root</argument>
         <argument key="password">null</argument>
-        <argument key="driverOptions" type="collection"/>
+        <argument key="driverOptions" type="collection">
+          <argument key="1002">true</argument>
+        </argument>
+        <argument key="serverVersion">16.0.0</argument>
         <argument key="defaultTableOptions" type="collection"/>
       </argument>
       <argument type="service" id="doctrine.dbal.default_connection.configuration"/>
       <argument>null</argument>
-      <argument type="collection"/>
+      <argument type="collection">
+        <argument key="_text">text</argument>
+        <argument key="_int4">integer</argument>
+        <argument key="_int8">bigint</argument>
+        <argument key="vector">json</argument>
+        <argument key="jsonb">json</argument>
+        <argument key="code_challenge_method">string</argument>
+        <argument key="factor_type">string</argument>
+        <argument key="factor_status">string</argument>
+      </argument>
       <factory service="doctrine.dbal.connection_factory" method="createConnection"/>
     </service>
     <service id="Doctrine\Bundle\DoctrineBundle\Dbal\ManagerRegistryAwareConnectionProvider" class="Doctrine\Bundle\DoctrineBundle\Dbal\ManagerRegistryAwareConnectionProvider">
@@ -1645,23 +1668,98 @@
         </service>
       </argument>
     </service>
+    <service id="doctrine.dbal.maintenance_connection.configuration" class="Doctrine\DBAL\Configuration">
+      <call method="setSchemaManagerFactory">
+        <argument type="service" id="doctrine.dbal.default_schema_manager_factory"/>
+      </call>
+      <call method="setSchemaAssetsFilter">
+        <argument type="service" id="doctrine.dbal.maintenance_schema_asset_filter_manager"/>
+      </call>
+      <call method="setMiddlewares">
+        <argument type="collection">
+          <argument type="service" id="doctrine.dbal.debug_middleware.maintenance"/>
+          <argument type="service" id="doctrine.dbal.idle_connection_middleware.maintenance"/>
+        </argument>
+      </call>
+    </service>
+    <service id="doctrine.dbal.maintenance_regex_schema_filter" class="Doctrine\Bundle\DoctrineBundle\Dbal\RegexSchemaAssetFilter">
+      <tag name="doctrine.dbal.schema_filter" connection="maintenance"/>
+      <argument>~^(?!auth\.|extensions\.|storage\.|realtime\.|graphql\.)~</argument>
+    </service>
+    <service id="doctrine.dbal.maintenance_connection.event_manager" class="Symfony\Bridge\Doctrine\ContainerAwareEventManager">
+      <argument type="service" id=".service_locator.RQmp2Kc"/>
+      <argument type="collection">
+        <argument type="collection">
+          <argument type="collection">
+            <argument>postGenerateSchema</argument>
+          </argument>
+          <argument>doctrine.orm.listeners.doctrine_dbal_cache_adapter_schema_listener</argument>
+        </argument>
+        <argument type="collection">
+          <argument type="collection">
+            <argument>postGenerateSchema</argument>
+          </argument>
+          <argument>doctrine.orm.listeners.doctrine_token_provider_schema_listener</argument>
+        </argument>
+        <argument type="collection">
+          <argument type="collection">
+            <argument>postGenerateSchema</argument>
+          </argument>
+          <argument>doctrine.orm.listeners.lock_store_schema_listener</argument>
+        </argument>
+        <argument type="collection">
+          <argument type="collection">
+            <argument>loadClassMetadata</argument>
+          </argument>
+          <argument>doctrine.orm.default_listeners.attach_entity_listeners</argument>
+        </argument>
+      </argument>
+    </service>
+    <service id="doctrine.dbal.maintenance_connection" class="Doctrine\DBAL\Connection" public="true">
+      <argument type="collection">
+        <argument key="url">%env(resolve:SESSION_URL)%</argument>
+        <argument key="driver">pdo_mysql</argument>
+        <argument key="idle_connection_ttl">600</argument>
+        <argument key="host">localhost</argument>
+        <argument key="port">null</argument>
+        <argument key="user">root</argument>
+        <argument key="password">null</argument>
+        <argument key="driverOptions" type="collection"/>
+        <argument key="serverVersion">16.0.0</argument>
+        <argument key="defaultTableOptions" type="collection"/>
+      </argument>
+      <argument type="service" id="doctrine.dbal.maintenance_connection.configuration"/>
+      <argument>null</argument>
+      <argument type="collection">
+        <argument key="_text">text</argument>
+        <argument key="_int4">integer</argument>
+        <argument key="_int8">bigint</argument>
+        <argument key="vector">json</argument>
+        <argument key="jsonb">json</argument>
+        <argument key="code_challenge_method">string</argument>
+        <argument key="factor_type">string</argument>
+        <argument key="factor_status">string</argument>
+      </argument>
+      <factory service="doctrine.dbal.connection_factory" method="createConnection"/>
+    </service>
     <service id="doctrine.dbal.connection_expiries" class="ArrayObject"/>
     <service id="doctrine.debug_data_holder" class="Doctrine\Bundle\DoctrineBundle\Middleware\BacktraceDebugDataHolder">
       <tag name="kernel.reset" method="reset"/>
-      <argument type="collection">
-        <argument>default</argument>
-      </argument>
+      <argument type="collection"/>
     </service>
     <service id="doctrine.dbal.debug_middleware" class="Doctrine\Bundle\DoctrineBundle\Middleware\DebugMiddleware" abstract="true">
       <tag name="doctrine.middleware" connection="default" priority="10"/>
+      <tag name="doctrine.middleware" connection="maintenance" priority="10"/>
       <argument type="service" id="doctrine.debug_data_holder"/>
       <argument type="service" id="debug.stopwatch" on-invalid="null"/>
     </service>
     <service id="doctrine.dbal.idle_connection_middleware" class="Doctrine\Bundle\DoctrineBundle\Middleware\IdleConnectionMiddleware" abstract="true">
       <tag name="doctrine.middleware" connection="default" priority="10"/>
+      <tag name="doctrine.middleware" connection="maintenance" priority="10"/>
       <argument type="service" id="doctrine.dbal.connection_expiries"/>
       <argument type="collection">
         <argument key="default">600</argument>
+        <argument key="maintenance">600</argument>
       </argument>
     </service>
     <service id="doctrine.orm.proxy_cache_warmer" class="Symfony\Bridge\Doctrine\CacheWarmer\ProxyCacheWarmer">
@@ -1679,7 +1777,7 @@
     <service id="doctrine.orm.configuration" class="Doctrine\ORM\Configuration" abstract="true"/>
     <service id="doctrine.orm.entity_manager.abstract" class="Doctrine\ORM\EntityManager" lazy="true" abstract="true"/>
     <service id="doctrine.orm.container_repository_factory" class="Doctrine\Bundle\DoctrineBundle\Repository\ContainerRepositoryFactory">
-      <argument type="service" id=".service_locator.pL.xV9Q"/>
+      <argument type="service" id=".service_locator.dpiLQ5O"/>
     </service>
     <service id="doctrine.orm.manager_configurator.abstract" class="Doctrine\Bundle\DoctrineBundle\ManagerConfigurator" abstract="true">
       <argument type="collection"/>
@@ -1856,7 +1954,7 @@
       <tag name="doctrine.orm.configuration"/>
       <call method="setEntityNamespaces">
         <argument type="collection">
-          <argument key="App">App\Entity</argument>
+          <argument key="App">App\Domain\Entity</argument>
         </argument>
       </call>
       <call method="setMetadataCache">
@@ -1915,7 +2013,7 @@
     </service>
     <service id="doctrine.orm.default_attribute_metadata_driver" class="Doctrine\ORM\Mapping\Driver\AttributeDriver">
       <argument type="collection">
-        <argument>D:\Docker\SymfonyIntHub\src\Entity</argument>
+        <argument>D:\Docker\SymfonyIntHub\src\Domain\Entity</argument>
       </argument>
       <argument>true</argument>
     </service>
@@ -2143,6 +2241,7 @@
     <service id="doctrine_migrations.schema_filter_listener" class="Doctrine\Bundle\MigrationsBundle\EventListener\SchemaFilterListener">
       <tag name="kernel.event_listener" event="console.command" method="onConsoleCommand"/>
       <tag name="doctrine.dbal.schema_filter" connection="default"/>
+      <tag name="doctrine.dbal.schema_filter" connection="maintenance"/>
       <tag name="container.no_preload"/>
       <argument>doctrine_migration_versions</argument>
     </service>
@@ -2176,7 +2275,7 @@
       <argument type="collection">
         <argument key="default" type="collection">
           <argument type="collection">
-            <argument>App\Entity</argument>
+            <argument>App\Domain\Entity</argument>
             <argument type="service" id="doctrine.orm.default_attribute_metadata_driver"/>
           </argument>
         </argument>
@@ -2351,10 +2450,11 @@
       <argument type="service" id="maker.file_manager"/>
       <argument type="service" id="maker.generator"/>
     </service>
-    <service id=".instanceof.App\Entity\User.0.App\Entity\User" class="App\Entity\User" autowire="true" abstract="true"/>
-    <service id=".abstract.instanceof.App\Entity\User" class="App\Entity\User" autowire="true" autoconfigure="true" abstract="true"/>
-    <service id=".instanceof.Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepositoryInterface.0.App\Repository\UserRepository" class="App\Repository\UserRepository" autowire="true" abstract="true"/>
-    <service id=".abstract.instanceof.App\Repository\UserRepository" class="App\Repository\UserRepository" autowire="true" autoconfigure="true" abstract="true"/>
+    <service id=".instanceof.UnitEnum.0.App\Core\Enum\SyncStatus" class="App\Core\Enum\SyncStatus" autowire="true" abstract="true"/>
+    <service id=".abstract.instanceof.App\Core\Enum\SyncStatus" class="App\Core\Enum\SyncStatus" autowire="true" autoconfigure="true" abstract="true"/>
+    <service id=".instanceof.Symfony\Component\Console\Command\Command.0.App\Infrastructure\Console\TestSaveProductCommand" class="App\Infrastructure\Console\TestSaveProductCommand" autowire="true" abstract="true"/>
+    <service id=".instanceof.App\Infrastructure\Console\TestSaveProductCommand.0.App\Infrastructure\Console\TestSaveProductCommand" class="App\Infrastructure\Console\TestSaveProductCommand" autowire="true" abstract="true"/>
+    <service id=".abstract.instanceof.App\Infrastructure\Console\TestSaveProductCommand" class="App\Infrastructure\Console\TestSaveProductCommand" autowire="true" autoconfigure="true" abstract="true"/>
     <service id=".service_locator.ryAvHi4" class="Symfony\Component\DependencyInjection\ServiceLocator">
       <tag name="container.service_locator"/>
       <argument type="collection">
@@ -2865,11 +2965,9 @@
         <argument key="doctrine.orm.default_listeners.attach_entity_listeners" type="service_closure" id="doctrine.orm.default_listeners.attach_entity_listeners"/>
       </argument>
     </service>
-    <service id=".service_locator.pL.xV9Q" class="Symfony\Component\DependencyInjection\ServiceLocator">
+    <service id=".service_locator.dpiLQ5O" class="Symfony\Component\DependencyInjection\ServiceLocator">
       <tag name="container.service_locator"/>
-      <argument type="collection">
-        <argument key="App\Repository\UserRepository" type="service_closure" id="App\Repository\UserRepository"/>
-      </argument>
+      <argument type="collection"/>
     </service>
     <service id=".service_locator.W55Po6X" class="Symfony\Component\DependencyInjection\ServiceLocator">
       <tag name="container.service_locator"/>
@@ -2885,6 +2983,13 @@
     </service>
     <service id="doctrine.dbal.default_schema_asset_filter_manager" class="Doctrine\Bundle\DoctrineBundle\Dbal\SchemaAssetsFilterManager">
       <argument type="collection">
+        <argument type="service" id="doctrine.dbal.default_regex_schema_filter"/>
+        <argument type="service" id="doctrine_migrations.schema_filter_listener"/>
+      </argument>
+    </service>
+    <service id="doctrine.dbal.maintenance_schema_asset_filter_manager" class="Doctrine\Bundle\DoctrineBundle\Dbal\SchemaAssetsFilterManager">
+      <argument type="collection">
+        <argument type="service" id="doctrine.dbal.maintenance_regex_schema_filter"/>
         <argument type="service" id="doctrine_migrations.schema_filter_listener"/>
       </argument>
     </service>
@@ -2899,9 +3004,27 @@
       <argument type="service" id="doctrine.dbal.connection_expiries"/>
       <argument type="collection">
         <argument key="default">600</argument>
+        <argument key="maintenance">600</argument>
       </argument>
       <call method="setConnectionName">
         <argument>default</argument>
+      </call>
+    </service>
+    <service id="doctrine.dbal.debug_middleware.maintenance" class="Doctrine\Bundle\DoctrineBundle\Middleware\DebugMiddleware">
+      <argument type="service" id="doctrine.debug_data_holder"/>
+      <argument type="service" id="debug.stopwatch" on-invalid="null"/>
+      <call method="setConnectionName">
+        <argument>maintenance</argument>
+      </call>
+    </service>
+    <service id="doctrine.dbal.idle_connection_middleware.maintenance" class="Doctrine\Bundle\DoctrineBundle\Middleware\IdleConnectionMiddleware">
+      <argument type="service" id="doctrine.dbal.connection_expiries"/>
+      <argument type="collection">
+        <argument key="default">600</argument>
+        <argument key="maintenance">600</argument>
+      </argument>
+      <call method="setConnectionName">
+        <argument>maintenance</argument>
       </call>
     </service>
     <service id="logger" class="Symfony\Component\HttpKernel\Log\Logger">
@@ -2973,10 +3096,6 @@
         <argument key="reverse_container" type="service_closure" id="reverse_container" on-invalid="ignore_uninitialized"/>
       </argument>
     </service>
-    <service id=".service_locator.dpiLQ5O" class="Symfony\Component\DependencyInjection\ServiceLocator">
-      <tag name="container.service_locator"/>
-      <argument type="collection"/>
-    </service>
     <service id=".service_locator.YDYHnos" class="Symfony\Component\DependencyInjection\ServiceLocator">
       <tag name="container.service_locator"/>
       <argument type="collection">
@@ -3031,7 +3150,7 @@
     <service id=".doctrine.orm.default_metadata_driver.inner" class="Doctrine\Persistence\Mapping\Driver\MappingDriverChain">
       <call method="addDriver">
         <argument type="service" id="doctrine.orm.default_attribute_metadata_driver"/>
-        <argument>App\Entity</argument>
+        <argument>App\Domain\Entity</argument>
       </call>
     </service>
     <service id=".errored..service_locator.1vYpZ1B.Symfony\Component\Config\Loader\LoaderInterface" class="Symfony\Component\Config\Loader\LoaderInterface">
@@ -3513,8 +3632,9 @@
     </service>
     <service id="console.command_loader" class="Symfony\Component\Console\CommandLoader\ContainerCommandLoader" public="true">
       <tag name="container.no_preload"/>
-      <argument type="service" id=".service_locator.6u4YAuZ"/>
+      <argument type="service" id=".service_locator.6PP5123"/>
       <argument type="collection">
+        <argument key="app:test-save-product">App\Infrastructure\Console\TestSaveProductCommand</argument>
         <argument key="about">console.command.about</argument>
         <argument key="assets:install">console.command.assets_install</argument>
         <argument key="cache:clear">console.command.cache_clear</argument>
@@ -3604,9 +3724,10 @@
         <argument key="make:webhook">maker.auto_command.make_webhook</argument>
       </argument>
     </service>
-    <service id=".service_locator.6u4YAuZ" class="Symfony\Component\DependencyInjection\ServiceLocator">
+    <service id=".service_locator.6PP5123" class="Symfony\Component\DependencyInjection\ServiceLocator">
       <tag name="container.service_locator"/>
       <argument type="collection">
+        <argument key="App\Infrastructure\Console\TestSaveProductCommand" type="service_closure" id="App\Infrastructure\Console\TestSaveProductCommand"/>
         <argument key="console.command.about" type="service_closure" id=".console.command.about.lazy"/>
         <argument key="console.command.assets_install" type="service_closure" id=".console.command.assets_install.lazy"/>
         <argument key="console.command.cache_clear" type="service_closure" id=".console.command.cache_clear.lazy"/>
@@ -3693,6 +3814,7 @@
         <argument key="maker.auto_command.make_webhook" type="service_closure" id=".maker.auto_command.make_webhook.lazy"/>
       </argument>
     </service>
+    <service id="App\Domain\Repository\ProductRepositoryInterface" alias="App\Infrastructure\Persistence\DoctrineProductRepository"/>
     <service id="App\Kernel" alias="kernel" public="true"/>
     <service id="Symfony\Bundle\FrameworkBundle\Controller\ControllerHelper" alias="controller.helper"/>
     <service id="Symfony\Component\DependencyInjection\ParameterBag\ContainerBagInterface" alias="parameter_bag"/>
@@ -3744,6 +3866,8 @@
     <service id="doctrine.dbal.event_manager" alias="doctrine.dbal.default_connection.event_manager"/>
     <service id=".Doctrine\DBAL\Connection $default.connection" alias="doctrine.dbal.default_connection"/>
     <service id="Doctrine\DBAL\Connection $defaultConnection" alias="doctrine.dbal.default_connection"/>
+    <service id=".Doctrine\DBAL\Connection $maintenance.connection" alias="doctrine.dbal.maintenance_connection"/>
+    <service id="Doctrine\DBAL\Connection $maintenanceConnection" alias="doctrine.dbal.maintenance_connection"/>
     <service id="Doctrine\ORM\EntityManagerInterface" alias="doctrine.orm.default_entity_manager"/>
     <service id="doctrine.orm.entity_manager" alias="doctrine.orm.default_entity_manager" public="true"/>
     <service id="doctrine.orm.default_metadata_cache" alias="cache.doctrine.orm.default.metadata"/>
