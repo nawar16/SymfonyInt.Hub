@@ -27,8 +27,8 @@ class TestSaveProductCommand extends Command
         $product->setSource('manual');
         $this->repository->save($product);
         $output->writeln('Done, product saved!');
-        $this->repository->remove($product);
-        $output->writeln('Done, product deleted!');
+        // $this->repository->remove($product);
+        // $output->writeln('Done, product deleted!');
         return Command::SUCCESS;
     }
 }

@@ -213,6 +213,7 @@
       <argument type="service" id="App\Core\Service\ProductNormalizer"/>
       <argument type="service" id="App\Core\Service\ProductValidator"/>
       <argument type="service" id="App\Infrastructure\Persistence\DoctrineProductRepository"/>
+      <argument type="service" id="App\Core\Service\SyncLogger"/>
     </service>
     <service id=".abstract.App\Core\Contract\IntegrationInterface" class="App\Core\Contract\IntegrationInterface" autowire="true" autoconfigure="true" abstract="true">
       <tag name="container.excluded" source="because the class is abstract"/>
@@ -227,6 +228,9 @@
       <argument type="service" id="App\Infrastructure\Persistence\DoctrineProductRepository"/>
     </service>
     <service id="App\Core\Service\ProductValidator" class="App\Core\Service\ProductValidator" autowire="true" autoconfigure="true"/>
+    <service id="App\Core\Service\SyncLogger" class="App\Core\Service\SyncLogger" autowire="true" autoconfigure="true">
+      <argument type="service" id="doctrine.orm.default_entity_manager"/>
+    </service>
     <service id=".abstract.App\Domain\Repository\ProductRepositoryInterface" class="App\Domain\Repository\ProductRepositoryInterface" autowire="true" autoconfigure="true" abstract="true">
       <tag name="container.excluded" source="because the class is abstract"/>
     </service>

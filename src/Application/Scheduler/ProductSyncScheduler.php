@@ -20,6 +20,7 @@ class ProductSyncScheduler implements ScheduleProviderInterface
     public function getSchedule(): Schedule
     {
         return (new Schedule())
-            ->add(RecurringMessage::every('1 minute', new SyncProductsMessage('mock')));
+        ->add(RecurringMessage::every('5 minutes', new SyncProductsMessage('mock')))
+        ->add(RecurringMessage::every('1 hour', new SyncProductsMessage('mock')));
     }
 }
