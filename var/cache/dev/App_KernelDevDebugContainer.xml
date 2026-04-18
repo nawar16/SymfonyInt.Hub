@@ -261,6 +261,10 @@
     <service id="App\Integration\Mock\MockIntegration" class="App\Integration\Mock\MockIntegration" autowire="true" autoconfigure="true">
       <tag name="app.integration"/>
     </service>
+    <service id="App\Integration\WooCommerce\WooCommerceIntegration" class="App\Integration\WooCommerce\WooCommerceIntegration" autowire="true" autoconfigure="true">
+      <tag name="app.integration"/>
+      <argument type="service" id="http_client.uri_template"/>
+    </service>
     <service id="argument_metadata_factory" class="Symfony\Component\HttpKernel\ControllerMetadata\ArgumentMetadataFactory"/>
     <service id="argument_resolver.backed_enum_resolver" class="Symfony\Component\HttpKernel\Controller\ArgumentResolver\BackedEnumValueResolver">
       <tag name="Symfony\Component\HttpKernel\Controller\ArgumentResolver\BackedEnumValueResolver" priority="100">controller.argument_value_resolver</tag>
@@ -4654,7 +4658,6 @@
       </argument>
     </service>
     <service id="App\Domain\Repository\ProductRepositoryInterface" alias="App\Infrastructure\Persistence\DoctrineProductRepository"/>
-    <service id="App\Core\Contract\IntegrationInterface" alias="App\Integration\Mock\MockIntegration"/>
     <service id="App\Kernel" alias="kernel" public="true"/>
     <service id="Symfony\Bundle\FrameworkBundle\Controller\ControllerHelper" alias="controller.helper"/>
     <service id="Symfony\Component\DependencyInjection\ParameterBag\ContainerBagInterface" alias="parameter_bag"/>

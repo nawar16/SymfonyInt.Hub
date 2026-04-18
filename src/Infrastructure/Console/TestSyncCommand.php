@@ -25,7 +25,7 @@ class TestSyncCommand extends Command
         // $integration = new MockIntegration();
         // $this->syncService->sync($integration);
         // $output->writeln('Done from sync');
-        $this->bus->dispatch(new SyncProductsMessage('mock'));
+        $this->bus->dispatch(new SyncProductsMessage('woocommerce'));
         $output->writeln('Done from sync with message dispatch');
         return Command::SUCCESS;
     }
