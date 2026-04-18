@@ -207,6 +207,8 @@
       <tag name="container.error" message="Cannot autowire service &quot;App\Application\Message\SyncProductsMessage&quot;: argument &quot;$integrationName&quot; of method &quot;__construct()&quot; is type-hinted &quot;string&quot;, you should configure its value explicitly."/>
     </service>
     <service id="App\Application\Service\SyncProductsService" class="App\Application\Service\SyncProductsService" autowire="true" autoconfigure="true">
+      <argument type="service" id="App\Core\Service\ProductNormalizer"/>
+      <argument type="service" id="App\Core\Service\ProductValidator"/>
       <argument type="service" id="App\Infrastructure\Persistence\DoctrineProductRepository"/>
     </service>
     <service id=".abstract.App\Core\Contract\IntegrationInterface" class="App\Core\Contract\IntegrationInterface" autowire="true" autoconfigure="true" abstract="true">
@@ -218,6 +220,10 @@
     <service id="App\Core\Service\IntegrationRegistry" class="App\Core\Service\IntegrationRegistry" autowire="true" autoconfigure="true">
       <argument type="tagged_iterator" tag="app.integration"/>
     </service>
+    <service id="App\Core\Service\ProductNormalizer" class="App\Core\Service\ProductNormalizer" autowire="true" autoconfigure="true">
+      <argument type="service" id="App\Infrastructure\Persistence\DoctrineProductRepository"/>
+    </service>
+    <service id="App\Core\Service\ProductValidator" class="App\Core\Service\ProductValidator" autowire="true" autoconfigure="true"/>
     <service id=".abstract.App\Domain\Repository\ProductRepositoryInterface" class="App\Domain\Repository\ProductRepositoryInterface" autowire="true" autoconfigure="true" abstract="true">
       <tag name="container.excluded" source="because the class is abstract"/>
     </service>
