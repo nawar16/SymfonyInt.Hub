@@ -252,6 +252,9 @@
         <argument>app:test-sync</argument>
       </call>
     </service>
+    <service id="App\Infrastructure\Http\RetryableHttpClient" class="App\Infrastructure\Http\RetryableHttpClient" autowire="true" autoconfigure="true">
+      <argument type="service" id="http_client.uri_template"/>
+    </service>
     <service id="App\Infrastructure\Persistence\DoctrineProductRepository" class="App\Infrastructure\Persistence\DoctrineProductRepository" autowire="true" autoconfigure="true">
       <argument type="service" id="doctrine.orm.default_entity_manager"/>
     </service>
@@ -422,6 +425,9 @@
         <argument key="cache.property_info" type="service" id="cache.property_info" on-invalid="ignore_uninitialized"/>
         <argument key="cache.messenger.restart_workers_signal" type="service" id="cache.messenger.restart_workers_signal" on-invalid="ignore_uninitialized"/>
         <argument key="cache.scheduler" type="service" id="cache.scheduler" on-invalid="ignore_uninitialized"/>
+        <argument key="cache.http_client.pool" type="service" id="cache.http_client.pool" on-invalid="ignore_uninitialized"/>
+        <argument key="http_client.transport" type="service" id="http_client.transport" on-invalid="ignore_uninitialized"/>
+        <argument key="http_client" type="service" id="http_client.uri_template" on-invalid="ignore_uninitialized"/>
         <argument key="debug.stopwatch" type="service" id="debug.stopwatch" on-invalid="ignore_uninitialized"/>
         <argument key="debug.event_dispatcher" type="service" id="debug.event_dispatcher" on-invalid="ignore_uninitialized"/>
         <argument key="messenger.transport.in_memory.factory" type="service" id="messenger.transport.in_memory.factory" on-invalid="ignore_uninitialized"/>
@@ -458,6 +464,15 @@
         </argument>
         <argument key="cache.scheduler" type="collection">
           <argument>reset</argument>
+        </argument>
+        <argument key="cache.http_client.pool" type="collection">
+          <argument>reset</argument>
+        </argument>
+        <argument key="http_client.transport" type="collection">
+          <argument>?reset</argument>
+        </argument>
+        <argument key="http_client" type="collection">
+          <argument>?reset</argument>
         </argument>
         <argument key="debug.stopwatch" type="collection">
           <argument>reset</argument>
@@ -629,6 +644,7 @@
         <argument>cache.property_info</argument>
         <argument>cache.messenger.restart_workers_signal</argument>
         <argument>cache.scheduler</argument>
+        <argument>cache.http_client.pool</argument>
         <argument>cache.doctrine.orm.default.result</argument>
         <argument>cache.doctrine.orm.default.query</argument>
       </argument>
@@ -653,7 +669,7 @@
     <service id="console.command.cache_pool_invalidate_tags" class="Symfony\Bundle\FrameworkBundle\Command\CachePoolInvalidateTagsCommand">
       <tag name="console.command"/>
       <tag name="container.no_preload"/>
-      <argument type="service" id=".service_locator.YDYHnos"/>
+      <argument type="service" id=".service_locator.6eloqTE"/>
       <call method="setName">
         <argument>cache:pool:invalidate-tags</argument>
       </call>
@@ -673,6 +689,7 @@
         <argument>cache.property_info</argument>
         <argument>cache.messenger.restart_workers_signal</argument>
         <argument>cache.scheduler</argument>
+        <argument>cache.http_client.pool</argument>
         <argument>cache.doctrine.orm.default.result</argument>
         <argument>cache.doctrine.orm.default.query</argument>
       </argument>
@@ -694,6 +711,7 @@
         <argument>cache.property_info</argument>
         <argument>cache.messenger.restart_workers_signal</argument>
         <argument>cache.scheduler</argument>
+        <argument>cache.http_client.pool</argument>
         <argument>cache.doctrine.orm.default.result</argument>
         <argument>cache.doctrine.orm.default.query</argument>
       </argument>
@@ -860,6 +878,12 @@
               <argument type="collection">
                 <argument key="sign">true</argument>
               </argument>
+            </argument>
+          </argument>
+          <argument key="Symfony\Component\HttpClient\Messenger\PingWebhookMessage" type="collection">
+            <argument type="collection">
+              <argument>http_client.messenger.ping_webhook_handler</argument>
+              <argument type="collection"/>
             </argument>
           </argument>
           <argument key="Symfony\Component\Scheduler\Messenger\ServiceCallMessage" type="collection">
@@ -1250,6 +1274,7 @@
         <argument key="cache.app" type="service" id="cache.app" on-invalid="ignore_uninitialized"/>
         <argument key="cache.messenger.restart_workers_signal" type="service" id="cache.messenger.restart_workers_signal" on-invalid="ignore_uninitialized"/>
         <argument key="cache.scheduler" type="service" id="cache.scheduler" on-invalid="ignore_uninitialized"/>
+        <argument key="cache.http_client.pool" type="service" id="cache.http_client.pool" on-invalid="ignore_uninitialized"/>
       </argument>
     </service>
     <service id="cache.system_clearer" class="Symfony\Component\HttpKernel\CacheClearer\Psr6CacheClearer" public="true">
@@ -1271,9 +1296,70 @@
         <argument key="cache.property_info" type="service" id="cache.property_info" on-invalid="ignore_uninitialized"/>
         <argument key="cache.messenger.restart_workers_signal" type="service" id="cache.messenger.restart_workers_signal" on-invalid="ignore_uninitialized"/>
         <argument key="cache.scheduler" type="service" id="cache.scheduler" on-invalid="ignore_uninitialized"/>
+        <argument key="cache.http_client.pool" type="service" id="cache.http_client.pool" on-invalid="ignore_uninitialized"/>
         <argument key="cache.doctrine.orm.default.result" type="service" id="cache.doctrine.orm.default.result" on-invalid="ignore_uninitialized"/>
         <argument key="cache.doctrine.orm.default.query" type="service" id="cache.doctrine.orm.default.query" on-invalid="ignore_uninitialized"/>
       </argument>
+    </service>
+    <service id="cache.http_client.pool" class="Symfony\Component\Cache\Adapter\FilesystemAdapter" public="true">
+      <tag name="cache.pool" pruneable="true"/>
+      <tag name="kernel.reset" method="reset"/>
+      <argument>708EMmy+37</argument>
+      <argument>0</argument>
+      <argument>D:\Docker\SymfonyIntHub\var\share\dev/pools/app</argument>
+      <argument type="service" id="cache.default_marshaller" on-invalid="ignore"/>
+      <call method="setLogger">
+        <argument type="service" id="logger" on-invalid="ignore"/>
+      </call>
+    </service>
+    <service id="cache.http_client" class="Symfony\Component\Cache\Adapter\TagAwareAdapter">
+      <tag name="cache.taggable" pool="cache.http_client.pool"/>
+      <argument type="service" id="cache.http_client.pool"/>
+    </service>
+    <service id="http_client.transport" class="Symfony\Contracts\HttpClient\HttpClientInterface">
+      <tag name="monolog.logger" channel="http_client"/>
+      <tag name="kernel.reset" method="reset" on_invalid="ignore"/>
+      <argument type="collection"/>
+      <argument>6</argument>
+      <call method="setLogger">
+        <argument type="service" id="logger" on-invalid="ignore"/>
+      </call>
+      <factory class="Symfony\Component\HttpClient\HttpClient" method="create"/>
+    </service>
+    <service id="http_client.abstract_retry_strategy" class="Symfony\Component\HttpClient\Retry\GenericRetryStrategy" abstract="true">
+      <argument type="abstract">http codes</argument>
+      <argument type="abstract">delay ms</argument>
+      <argument type="abstract">multiplier</argument>
+      <argument type="abstract">max delay ms</argument>
+      <argument type="abstract">jitter</argument>
+    </service>
+    <service id="http_client.uri_template" class="Symfony\Component\HttpClient\UriTemplateHttpClient">
+      <tag name="http_client.client"/>
+      <tag name="kernel.reset" method="reset" on_invalid="ignore"/>
+      <tag name="container.decorator" id="http_client" inner="http_client.uri_template.inner"/>
+      <argument type="service" id="http_client.uri_template.inner"/>
+      <argument>null</argument>
+      <argument type="collection"/>
+    </service>
+    <service id="http_client.uri_template_expander.guzzle" class="Closure">
+      <argument type="collection">
+        <argument>GuzzleHttp\UriTemplate\UriTemplate</argument>
+        <argument>expand</argument>
+      </argument>
+      <factory class="Closure" method="fromCallable"/>
+    </service>
+    <service id="http_client.uri_template_expander.rize" class="Closure">
+      <argument type="collection">
+        <argument type="service">
+          <service class="Rize\UriTemplate"/>
+        </argument>
+        <argument>expand</argument>
+      </argument>
+      <factory class="Closure" method="fromCallable"/>
+    </service>
+    <service id="http_client.messenger.ping_webhook_handler" class="Symfony\Component\HttpClient\Messenger\PingWebhookMessageHandler">
+      <tag name="messenger.message_handler"/>
+      <argument type="service" id="http_client.uri_template"/>
     </service>
     <service id="debug.error_handler_configurator" class="Symfony\Component\HttpKernel\Debug\ErrorHandlerConfigurator" public="true">
       <tag name="monolog.logger" channel="php"/>
@@ -3595,6 +3681,10 @@
         <argument key="sign">true</argument>
       </argument>
     </service>
+    <service id=".messenger.handler_descriptor.Qv3faSN" class="Symfony\Component\Messenger\Handler\HandlerDescriptor">
+      <argument type="service" id="http_client.messenger.ping_webhook_handler"/>
+      <argument type="collection"/>
+    </service>
     <service id=".messenger.handler_descriptor.KMq4SyQ" class="Symfony\Component\Messenger\Handler\HandlerDescriptor">
       <argument type="service" id="scheduler.messenger.service_call_message_handler"/>
       <argument type="collection"/>
@@ -3627,6 +3717,9 @@
         </argument>
         <argument key="Symfony\Component\Console\Messenger\RunCommandMessage" type="iterator">
           <argument type="service" id=".messenger.handler_descriptor.NumTeF8"/>
+        </argument>
+        <argument key="Symfony\Component\HttpClient\Messenger\PingWebhookMessage" type="iterator">
+          <argument type="service" id=".messenger.handler_descriptor.Qv3faSN"/>
         </argument>
         <argument key="Symfony\Component\Scheduler\Messenger\ServiceCallMessage" type="iterator">
           <argument type="service" id=".messenger.handler_descriptor.KMq4SyQ"/>
@@ -3773,10 +3866,11 @@
         <argument key="reverse_container" type="service_closure" id="reverse_container" on-invalid="ignore_uninitialized"/>
       </argument>
     </service>
-    <service id=".service_locator.YDYHnos" class="Symfony\Component\DependencyInjection\ServiceLocator">
+    <service id=".service_locator.6eloqTE" class="Symfony\Component\DependencyInjection\ServiceLocator">
       <tag name="container.service_locator"/>
       <argument type="collection">
         <argument key="cache.app" type="service_closure" id="cache.app.taggable"/>
+        <argument key="cache.http_client.pool" type="service_closure" id="cache.http_client"/>
       </argument>
     </service>
     <service id=".service_locator.pKmY5Nr" class="Symfony\Component\DependencyInjection\ServiceLocator">
@@ -3796,6 +3890,12 @@
       <argument type="collection">
         <argument key="kernel" type="service_closure" id="kernel"/>
       </argument>
+    </service>
+    <service id="http_client.uri_template.inner" class="Symfony\Contracts\HttpClient\HttpClientInterface">
+      <argument type="collection">
+        <argument type="service" id="http_client.transport"/>
+      </argument>
+      <factory function="current"/>
     </service>
     <service id="debug.event_dispatcher.inner" class="Symfony\Component\EventDispatcher\EventDispatcher"/>
     <service id="debug.controller_resolver.inner" class="Symfony\Bundle\FrameworkBundle\Controller\ControllerResolver">
@@ -4589,6 +4689,7 @@
     <service id="Symfony\Contracts\Cache\CacheInterface" alias="cache.app"/>
     <service id="Symfony\Contracts\Cache\NamespacedPoolInterface" alias="cache.app"/>
     <service id="Symfony\Contracts\Cache\TagAwareCacheInterface" alias="cache.app.taggable"/>
+    <service id="Symfony\Contracts\HttpClient\HttpClientInterface" alias="http_client.uri_template"/>
     <service id="Symfony\Component\ErrorHandler\ErrorRenderer\FileLinkFormatter" alias="debug.file_link_formatter"/>
     <service id="Symfony\Component\Stopwatch\Stopwatch" alias="debug.stopwatch"/>
     <service id="router" alias="router.default" public="true"/>
@@ -4629,6 +4730,7 @@
     <service id="Psr\Log\LoggerInterface" alias="logger"/>
     <service id=".service_locator.s3BLYIn" alias="messenger.receiver_locator"/>
     <service id=".service_locator._LqE4ZD" alias="messenger.retry_strategy_locator"/>
+    <service id="http_client" alias="http_client.uri_template"/>
     <service id="event_dispatcher" alias="debug.event_dispatcher" public="true"/>
     <service id="controller_resolver" alias="debug.controller_resolver"/>
     <service id="argument_resolver" alias="debug.argument_resolver"/>

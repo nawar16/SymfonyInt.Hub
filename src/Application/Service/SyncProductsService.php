@@ -24,11 +24,16 @@ class SyncProductsService
         try{
             foreach ($integration->fetch() as $rawData) 
             {
-                $dto = $integration->transform($rawData);
-                $this->validator->validate($dto);
-                $product = $this->normalizer->normalize($dto);
-                $this->repository->save($product);
+                try {
+                    $dto = $integration->transform($rawData);
+                    $this->validator->validate($dto);
+                    $product = $this->normalizer->normalize($dto);
+                    $this->repository->save($product);
+                } catch (\Throwable $e) {
+                    $this->logger->log('integration', 'failed_item', $e->getMessage());
+                }
             }
+            $this->logger->log('integration', 'success');
         } catch (Throwable $e) 
         {
             $this->logger->log('integration', 'failed', $e->getMessage());

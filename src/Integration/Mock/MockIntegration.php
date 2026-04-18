@@ -4,11 +4,15 @@ namespace App\Integration\Mock;
 
 use App\Core\Contract\IntegrationInterface;
 use App\Core\DTO\ProductDTO;
+use RuntimeException;
 
 class MockIntegration implements IntegrationInterface
 {
     public function fetch(): iterable
     {
+        if (random_int(1, 3) === 1) {
+            throw new RuntimeException('Random API failure for test');
+        }
         return [
             [
                 'id' => '1',
