@@ -31,7 +31,12 @@ jobs:
           extensions: pdo_pgsql
       - name: Install dependencies
         run: composer install
+      - name: Check DB
+        run: php bin/console doctrine:database:create --env=test --if-not-exists
       - name: Run migrations
-        run: php bin/console doctrine:migrations:migrate --no-interaction
+        run: php bin/console doctrine:schema:create --env=test
       - name: Run tests
         run: php bin/phpunit
+
+         
+
