@@ -49,10 +49,11 @@ jobs:
         run: php bin/console doctrine:schema:create --env=test
         env:
           DATABASE_URL: postgresql://app:password@127.0.0.1:5432/app_test?serverVersion=15&charset=utf8
+          DB_NAME_FORCE_NO_SUFFIX: 1
 
       - name: Run tests
         run: php bin/phpunit
         env:
           DATABASE_URL: postgresql://app:password@127.0.0.1:5432/app_test?serverVersion=15&charset=utf8
           SYMFONY_DEPRECATIONS_HELPER: disabled=1
-  
+          DB_NAME_FORCE_NO_SUFFIX: 1
