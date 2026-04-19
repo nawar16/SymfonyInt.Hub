@@ -1,0 +1,1 @@
+{"version":2,"defects":{"App\\Tests\\Service\\SyncProductsServiceTest::test_syncproduct_runs_without_errors":8},"times":{"App\\Tests\\Service\\SyncProductsServiceTest::test_syncproduct_runs_without_errors":2.279}}

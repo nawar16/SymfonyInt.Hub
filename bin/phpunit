@@ -1,0 +1,17 @@
+#!/usr/bin/env php
+<?php
+
+if (!file_exists(__DIR__.'/../vendor/autoload.php')) {
+    throw new LogicException('Composer autoload not found.');
+}
+
+require __DIR__.'/../vendor/autoload.php';
+
+$phpunit = __DIR__.'/../vendor/bin/phpunit';
+if (!file_exists($phpunit)) {
+    echo "PHPUnit binary not found in vendor. Run: composer require --dev phpunit/phpunit\n";
+    exit(1);
+}
+
+passthru(sprintf('php %s %s', $phpunit, implode(' ', array_slice($argv, 1))), $exitCode);
+exit($exitCode);
