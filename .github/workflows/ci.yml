@@ -29,14 +29,26 @@ jobs:
         with:
           php-version: 8.2
           extensions: pdo_pgsql
+
+      - name: Create .env file
+        run: |
+          echo "APP_ENV=test" > .env
+          echo "APP_SECRET=7f55734e5650ae40e90c41180237937e" >> .env
+          echo "DATABASE_URL=postgresql://app:password@127.0.0.1:5432/app?serverVersion=15&charset=utf8" >> .env
+
       - name: Install dependencies
         run: composer install
+
       - name: Check DB
         run: php bin/console doctrine:database:create --env=test --if-not-exists
+
       - name: Run migrations
         run: php bin/console doctrine:schema:create --env=test
+
       - name: Run tests
         run: php bin/phpunit
+        env:
+          DATABASE_URL: postgresql://app:password@127.0.0.1:5432/app?serverVersion=15&charset=utf8
 
          
 
