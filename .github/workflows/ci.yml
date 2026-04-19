@@ -38,6 +38,7 @@ jobs:
           echo "APP_ENV=test" > .env
           echo "APP_SECRET=7f55734e5650ae40e90c41180237937e" >> .env
           echo "DATABASE_URL=postgresql://app:password@127.0.0.1:5432/app?serverVersion=15&charset=utf8" >> .env
+          echo "MESSENGER_TRANSPORT_DSN=doctrine://default" >> .env 
 
       - name: Run migrations
         run: php bin/console doctrine:schema:create --env=test
