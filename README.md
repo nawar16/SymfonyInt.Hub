@@ -4,3 +4,8 @@ To keep the core clean, I use dedicated integration modules to fetch external da
 Business logic stays independent of the framework, while Doctrine ORM handles the persistence layer.
 
 
+## Testing
+php bin/phpunit
+
+
+![CI](https://github.com/nawar16/SymfonyInt.Hub/actions/workflows/ci.yml/badge.svg)

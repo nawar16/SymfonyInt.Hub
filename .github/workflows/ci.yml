@@ -12,7 +12,7 @@ jobs:
       postgres:
         image: postgres:15
         env:
-          POSTGRES_DB: app_test  
+          POSTGRES_DB: app_test
           POSTGRES_USER: app
           POSTGRES_PASSWORD: password
         ports:
@@ -24,11 +24,13 @@ jobs:
           --health-retries=5
     steps:
       - uses: actions/checkout@v4
+
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
           php-version: 8.2
           extensions: pdo_pgsql, mbstring, xml
+          ini-values: memory_limit=-1
 
       - name: Install dependencies
         run: composer install --no-interaction --prefer-dist
@@ -38,15 +40,18 @@ jobs:
           echo "APP_ENV=test" > .env
           echo "APP_SECRET=7f55734e5650ae40e90c41180237937e" >> .env
           echo "DATABASE_URL=postgresql://app:password@127.0.0.1:5432/app_test?serverVersion=15&charset=utf8" >> .env
-          echo "MESSENGER_TRANSPORT_DSN=doctrine://default" >> .env 
+          echo "MESSENGER_TRANSPORT_DSN=doctrine://default" >> .env
+
+      - name: Set Permissions
+        run: chmod +x bin/console bin/phpunit
 
       - name: Run migrations
         run: php bin/console doctrine:schema:create --env=test
+        env:
+          DATABASE_URL: postgresql://app:password@127.0.0.1:5432/app_test?serverVersion=15&charset=utf8
 
       - name: Run tests
         run: php bin/phpunit
         env:
           DATABASE_URL: postgresql://app:password@127.0.0.1:5432/app_test?serverVersion=15&charset=utf8
-
-         
-
+          SYMFONY_DEPRECATIONS_HELPER: disabled=1
