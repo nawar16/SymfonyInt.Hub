@@ -101,6 +101,12 @@
             "version": "7.3"
         }
     },
+    "symfony/property-info": {
+        "version": "7.4",
+        "recipe": {
+            "version": "7.3"
+        }
+    },
     "symfony/routing": {
         "version": "7.4",
         "recipe": {

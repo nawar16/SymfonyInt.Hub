@@ -3,27 +3,34 @@
 namespace App\Domain\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Attribute\Groups;
 
 #[ORM\Entity]
 class Product
 {
+    #[Groups(['product:read'])]
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
     private ?int $id = null;
 
+    #[Groups(['product:read'])]
     #[ORM\Column(length: 255)]
     private string $externalId;
 
+    #[Groups(['product:read'])]
     #[ORM\Column(length: 255)]
     private string $name;
 
+    #[Groups(['product:read'])]
     #[ORM\Column(type: 'float')]
     private float $price;
 
+    #[Groups(['product:read'])]
     #[ORM\Column(type: 'integer')]
     private int $stock;
 
+    #[Groups(['product:read'])]
     #[ORM\Column(length: 50)]
     private string $source;
 

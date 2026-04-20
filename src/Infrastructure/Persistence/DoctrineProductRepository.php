@@ -10,8 +10,23 @@ class DoctrineProductRepository implements ProductRepositoryInterface
 {
     public function __construct(private EntityManagerInterface $entityManager) 
     {}
-
-
+        
+    public function findPaginated(int $page, int $limit): array
+    {
+        return $this->entityManager->createQueryBuilder()
+            ->select('p')
+            ->from(Product::class, 'p')
+            ->setMaxResults($limit)
+            ->setFirstResult(($page - 1) * $limit)
+            ->getQuery()
+            ->getResult();
+    }
+    public function findAll(): array
+    {
+        return $this->entityManager
+            ->getRepository(Product::class)
+            ->findAll();
+    }
     public function findByExternalId(string $externalId): ?Product
     {
 
