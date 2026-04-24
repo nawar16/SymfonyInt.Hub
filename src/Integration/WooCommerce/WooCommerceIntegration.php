@@ -18,15 +18,21 @@ class WooCommerceIntegration implements IntegrationInterface
 
     public function fetch(): iterable
     {
-        $response = $this->client->request('GET', $_ENV['WC_API_URL'], 
-        [
-            'query' => ['per_page' => 100, 'page' => 1],
-            'auth_basic' => 
+        $page = 1;
+        do {
+            $response = $this->client->request('GET', $_ENV['WC_API_URL'], 
             [
-                $_ENV['WC_CONSUMER_KEY'],
-                $_ENV['WC_CONSUMER_SECRET']
-            ]
-        ]);
+                'query' => ['per_page' => 100, 'page' => $page],
+                'auth_basic' => 
+                [
+                    $_ENV['WC_CONSUMER_KEY'],
+                    $_ENV['WC_CONSUMER_SECRET']
+                ]
+            ]);
+            $data = $response->toArray();
+            foreach ($data as $item) yield $item;
+            $page++;
+        } while (!empty($data));
         return $response->toArray();
     }
 

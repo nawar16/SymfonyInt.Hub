@@ -38,6 +38,9 @@
     "nelmio/api-doc-bundle": {
         "version": "v5.10.0"
     },
+    "nelmio/cors-bundle": {
+        "version": "2.6.1"
+    },
     "phpunit/phpunit": {
         "version": "11.5",
         "recipe": {
