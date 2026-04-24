@@ -35,6 +35,9 @@
             "./migrations/.gitignore"
         ]
     },
+    "nelmio/api-doc-bundle": {
+        "version": "v5.10.0"
+    },
     "phpunit/phpunit": {
         "version": "11.5",
         "recipe": {
@@ -125,5 +128,8 @@
         "recipe": {
             "version": "7.2"
         }
+    },
+    "symfony/twig-bundle": {
+        "version": "v7.4.8"
     }
 }
