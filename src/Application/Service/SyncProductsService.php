@@ -3,6 +3,7 @@
 namespace App\Application\Service;
 
 use App\Core\Contract\IntegrationInterface;
+use App\Core\Service\CircuitBreaker;
 use App\Core\Service\ProductNormalizer;
 use App\Core\Service\ProductValidator;
 use App\Core\Service\SyncLogger;
@@ -12,6 +13,7 @@ use Throwable;
 
 class SyncProductsService
 {
+    private CircuitBreaker $circuitBreaker;
     public function __construct(
           private ProductNormalizer $normalizer,
           private ProductValidator $validator,
@@ -21,7 +23,13 @@ class SyncProductsService
 
     public function sync(IntegrationInterface $integration): void
     {
-        try{
+        $key = "woocommerce";
+        if (!$this->circuitBreaker->isAvailable($key)) 
+        {
+            $this->logger->log($key, 'skipped', 'Cir breaker is open');
+            return;
+        }
+        try {
             foreach ($integration->fetch() as $rawData) 
             {
                 try {
@@ -29,14 +37,16 @@ class SyncProductsService
                     $this->validator->validate($dto);
                     $product = $this->normalizer->normalize($dto);
                     $this->repository->save($product);
-                } catch (\Throwable $e) {
-                    $this->logger->log('integration', 'failed_item', $e->getMessage());
+                } catch (\Throwable $e){
+                    $this->logger->log($key, 'failed_item', $e->getMessage());
                 }
             }
-            $this->logger->log('integration', 'success');
-        } catch (Throwable $e) 
+            $this->circuitBreaker->recordSuccess($key);
+            $this->logger->log($key, 'success');
+        } catch (\Throwable $e) 
         {
-            $this->logger->log('integration', 'failed', $e->getMessage());
+            $this->circuitBreaker->recordFailure($key);
+            $this->logger->log($key, 'failed', $e->getMessage());
         }
     }
 }
