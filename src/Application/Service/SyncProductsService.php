@@ -13,12 +13,12 @@ use Throwable;
 
 class SyncProductsService
 {
-    private CircuitBreaker $circuitBreaker;
     public function __construct(
           private ProductNormalizer $normalizer,
           private ProductValidator $validator,
           private ProductRepositoryInterface $repository,
-          private SyncLogger $logger) 
+          private SyncLogger $logger,
+          private CircuitBreaker $circuitBreaker) 
     {}
 
     public function sync(IntegrationInterface $integration): void
