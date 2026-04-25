@@ -2,34 +2,32 @@
 
 namespace App\Core\Service;
 
+use Psr\Cache\CacheItemPoolInterface;
+
 class CircuitBreaker
 {
-    private array $failures = [];
-    private array $lastFailureTime = [];
     private int $threshold = 3;
-    private int $cooldown = 30; 
+    private int $cooldown = 30;
 
+    public function __construct(private CacheItemPoolInterface $cache) 
+    {}
     public function isAvailable(string $key): bool
     {
-        if (!isset($this->failures[$key])) 
-        {
-            return true;
-        }
-        if ($this->failures[$key] < $this->threshold) 
-        {
-            return true;
-        }
-        if (time() - $this->lastFailureTime[$key] > $this->cooldown) 
-        {
-            $this->reset($key);
-            return true;
-        }
-        return false;
+        $res = false;
+        $failures = $this->getFailures($key);
+        if($failures < $this->threshold) return true;
+        $lastFailure = $this->getLastFailureTime($key);
+        time() - $lastFailure > $this->cooldown ? [$this->reset($key), $res = true]:"";
+        return $res;
     }
     public function recordFailure(string $key): void
     {
-        $this->failures[$key] = ($this->failures[$key] ?? 0) + 1;
-        $this->lastFailureTime[$key] = time();
+        $this->cache->getItem("failure_cnt_$key")
+            ->set($this->getFailures($key) + 1)
+            ->expiresAfter(3600);
+        $this->cache->getItem("last_failure_time_$key")
+            ->set(time())
+            ->expiresAfter(3600);
     }
     public function recordSuccess(string $key): void
     {
@@ -37,7 +35,15 @@ class CircuitBreaker
     }
     private function reset(string $key): void
     {
-        $this->failures[$key] = 0;
-        $this->lastFailureTime[$key] = 0;
+        $this->cache->deleteItem("failure_cnt_$key");
+        $this->cache->deleteItem("last_failure_time_$key");
+    }
+    private function getFailures(string $key): int
+    {
+        return $this->cache->getItem("failure_cnt_$key")->get() ?? 0;
+    }
+    private function getLastFailureTime(string $key): int
+    {
+        return $this->cache->getItem("last_failure_time_$key")->get() ?? 0;
     }
 }
