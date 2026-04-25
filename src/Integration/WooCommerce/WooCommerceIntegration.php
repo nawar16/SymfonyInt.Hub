@@ -4,11 +4,16 @@ namespace App\Integration\WooCommerce;
 
 use App\Core\Contract\IntegrationInterface;
 use App\Core\DTO\ProductDTO;
+use RuntimeException;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
+use Symfony\Component\RateLimiter\RateLimiterFactory;
 
 class WooCommerceIntegration implements IntegrationInterface
 {
-    public function __construct(private HttpClientInterface $client) 
+    public function __construct(
+        private HttpClientInterface $client,
+        private RateLimiterFactory $externalApiLimiter
+    ) 
     {}
 
     public function supports(string $name): bool
@@ -19,7 +24,12 @@ class WooCommerceIntegration implements IntegrationInterface
     public function fetch(): iterable
     {
         $page = 1;
-        do {
+        do {        
+            $limit = $this->externalApiLimiter->create('woocommerce')->consume(1);
+            if (!$limit->isAccepted()) 
+            {
+                throw new RuntimeException('Rate limit exceeded');
+            }
             $response = $this->client->request('GET', $_ENV['WC_API_URL'], 
             [
                 'query' => ['per_page' => 100, 'page' => $page],
