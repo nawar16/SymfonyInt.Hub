@@ -3,7 +3,9 @@
 namespace App\Domain\Entity;
 
 use DateTimeImmutable;
+use DateTimeInterface;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Attribute\Groups;
 
 #[ORM\Entity]
 class SyncLog
@@ -13,15 +15,19 @@ class SyncLog
     #[ORM\Column]
     private ?int $id = null;
 
+    #[Groups(['synclog:read'])]
     #[ORM\Column(length: 50)]
     private string $integration;
 
+    #[Groups(['synclog:read'])]
     #[ORM\Column(length: 20)]
     private string $status;
 
+    #[Groups(['synclog:read'])]
     #[ORM\Column(type: 'text', nullable: true)]
     private ?string $message = null;
 
+    #[Groups(['synclog:read'])]
     #[ORM\Column]
     private DateTimeImmutable $createdAt;
 
@@ -43,5 +49,21 @@ class SyncLog
     {
         $this->message = $message;
         return $this;
+    }
+    public function getIntegration(): ?string
+    {
+        return $this->integration;
+    }
+    public function getStatus(): ?string
+    {
+        return $this->status;
+    }
+    public function getMessage(): ?string
+    {
+        return $this->message;
+    }
+    public function getCreatedAt(): ?DateTimeInterface
+    {
+        return $this->createdAt;
     }
 }
