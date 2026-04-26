@@ -1,11 +1,12 @@
-A simple modular monolith designed for enterprise-level organization without the overhead of microservices. The modules are strictly decoupled, making it easy to extract them into independent services as the system scales.
+A Symfony-based Modular Monolith designed to unify product data from external platforms (e.g. WooCommerce) into a centralized system, prioritizing high availability and resilience
 
-To keep the core clean, I use dedicated integration modules to fetch external data and normalize it into DTOs. 
-Business logic stays independent of the framework, while Doctrine ORM handles the persistence layer.
+## Features
+* Scalable Architecture: Modular Monolith for clean and manageable code
+* High Resilience: Circuit Breaker and Rate Limiting to prevent crashes
+* Automation: Full CI/CD pipeline with automated testing in Docker
 
 
 ## Testing
 php bin/phpunit
-
 
 ![CI](https://github.com/nawar16/SymfonyInt.Hub/actions/workflows/ci.yml/badge.svg)
